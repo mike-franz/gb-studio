@@ -3,10 +3,17 @@ import cx from "classnames";
 import Button from "../library/Button";
 import {
   EventFields,
-  EventNames,
-  EventsOnlyForActors
+  EventsOnlyForActors,
+  EVENT_TEXT
 } from "../../lib/compiler/eventTypes";
 import Highlighter from "react-highlight-words";
+import l10n from "../../lib/helpers/l10n";
+import trim2lines from "../../lib/helpers/trim2lines";
+
+const EventNames = Object.keys(EventFields).reduce((memo, key) => {
+  memo[key] = l10n(key);
+  return memo;
+}, {});
 
 const actions = Object.keys(EventFields).sort((a, b) => {
   var textA = (EventNames[a] || a).toUpperCase();
@@ -56,6 +63,16 @@ class AddCommandButton extends Component {
     });
   };
 
+  onAddText = () => {
+    clearTimeout(this.timeout);
+    this.props.onAdd(EVENT_TEXT, { text: trim2lines(this.state.query) });
+    this.setState({
+      open: false,
+      query: "",
+      selectedIndex: 0
+    });
+  };
+
   onHover = actionIndex => () => {
     this.setState({
       selectedIndex: actionIndex
@@ -74,6 +91,8 @@ class AddCommandButton extends Component {
     if (e.key === "Enter") {
       if (actionsList[selectedIndex]) {
         this.onAdd(actionsList[selectedIndex])();
+      } else if (this.state.query.length > 0) {
+        this.onAddText();
       }
     } else if (e.key === "Escape") {
       this.setState({
@@ -160,7 +179,7 @@ class AddCommandButton extends Component {
     const actionsList = this.filteredList();
     return (
       <div ref={this.button} className="AddCommandButton">
-        <Button onClick={this.onOpen}>Add Event</Button>
+        <Button onClick={this.onOpen}>{l10n("SIDEBAR_ADD_EVENT")}</Button>
         {open && (
           <div className={cx("AddCommandButton__Menu")}>
             <div className="AddCommandButton__Search">
@@ -193,6 +212,22 @@ class AddCommandButton extends Component {
                   />
                 </div>
               ))}
+              {actionsList.length === 0 && (
+                <div
+                  className={cx(
+                    "AddCommandButton__ListItem",
+                    "AddCommandButton__ListItem--Selected"
+                  )}
+                  onClick={this.onAddText}
+                >
+                  <Highlighter
+                    highlightClassName="AddCommandButton__ListItem__Highlight"
+                    searchWords={query.split(" ")}
+                    autoEscape={true}
+                    textToHighlight={`${EventNames["EVENT_TEXT"]} "${query}"`}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

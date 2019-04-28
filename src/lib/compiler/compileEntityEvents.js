@@ -39,7 +39,13 @@ import {
   EVENT_IF_INPUT,
   EVENT_CHOICE,
   EVENT_ACTOR_PUSH,
-  EVENT_IF_ACTOR_AT_POSITION
+  EVENT_IF_ACTOR_AT_POSITION,
+  EVENT_IF_ACTOR_DIRECTION,
+  EVENT_LOAD_DATA,
+  EVENT_SAVE_DATA,
+  EVENT_CLEAR_DATA,
+  EVENT_IF_SAVED_DATA,
+  EVENT_SET_RANDOM_VALUE
 } from "./eventTypes";
 import { hi, lo } from "../helpers/8bit";
 import {
@@ -108,7 +114,13 @@ const CMD_LOOKUP = {
   IF_INPUT: 0x26,
   CHOICE: 0x27,
   ACTOR_PUSH: 0x28,
-  IF_ACTOR_AT_POSITION: 0x29
+  IF_ACTOR_AT_POSITION: 0x29,
+  LOAD_DATA: 0x2a,
+  SAVE_DATA: 0x2b,
+  CLEAR_DATA: 0x2c,
+  IF_SAVED_DATA: 0x2d,
+  IF_ACTOR_DIRECTION: 0x2e,
+  SET_RANDOM_VALUE: 0x2f
 };
 
 const getActorIndex = (actorId, scene) => {
@@ -132,7 +144,7 @@ const getSpriteIndex = (spriteId, sprites) => {
 };
 
 const getVariableIndex = (variable, variables) => {
-  const variableIndex = variables.indexOf(variable);
+  const variableIndex = variables.indexOf(String(variable));
   if (variableIndex === -1) {
     throw new CompileEventsError(VARIABLE_NOT_FOUND, { variable });
     return 0;
@@ -256,6 +268,15 @@ const precompileEntityScript = (input = [], options = {}) => {
         ...options,
         output
       });
+    } else if (command === EVENT_IF_ACTOR_DIRECTION) {
+      const actorIndex = getActorIndex(input[i].args.actorId, scene);
+      output.push(CMD_LOOKUP.IF_ACTOR_DIRECTION);
+      output.push(actorIndex);
+      output.push(dirDec(input[i].args.direction));
+      compileConditional(input[i].true, input[i].false, {
+        ...options,
+        output
+      });
     } else if (command === EVENT_SET_TRUE) {
       const variableIndex = getVariableIndex(input[i].args.variable, variables);
       output.push(CMD_LOOKUP.SET_TRUE);
@@ -282,6 +303,12 @@ const precompileEntityScript = (input = [], options = {}) => {
       output.push(hi(variableIndex));
       output.push(lo(variableIndex));
       output.push(input[i].args.value || 0);
+    } else if (command === EVENT_SET_RANDOM_VALUE) {
+      const variableIndex = getVariableIndex(input[i].args.variable, variables);
+      output.push(CMD_LOOKUP.SET_RANDOM_VALUE);
+      output.push(hi(variableIndex));
+      output.push(lo(variableIndex));
+      output.push(input[i].args.maxValue || 0);
     } else if (command === EVENT_FADE_IN) {
       output.push(CMD_LOOKUP.FADE_IN);
       let speed = input[i].args.speed || 1;
@@ -430,6 +457,18 @@ const precompileEntityScript = (input = [], options = {}) => {
       output.push(startPtrIndex & 0xff);
     } else if (command === EVENT_STOP) {
       output.push(CMD_LOOKUP.END);
+    } else if (command === EVENT_LOAD_DATA) {
+      output.push(CMD_LOOKUP.LOAD_DATA);
+    } else if (command === EVENT_SAVE_DATA) {
+      output.push(CMD_LOOKUP.SAVE_DATA);
+    } else if (command === EVENT_CLEAR_DATA) {
+      output.push(CMD_LOOKUP.CLEAR_DATA);
+    } else if (command === EVENT_IF_SAVED_DATA) {
+      output.push(CMD_LOOKUP.IF_SAVED_DATA);
+      compileConditional(input[i].true, input[i].false, {
+        ...options,
+        output
+      });
     }
 
     for (var oi = 0; oi < output.length; oi++) {

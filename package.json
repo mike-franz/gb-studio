@@ -1,6 +1,7 @@
 {
   "name": "gb-studio",
   "productName": "GB Studio",
+  "homepage": "https://www.gbstudio.dev",
   "version": "1.0.0",
   "description": "Visual retro game maker",
   "main": "src/index.js",
@@ -8,17 +9,18 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make:win": "electron-forge make --arch=x64 --platform=win32",
+    "make:win32": "electron-forge make --arch=ia32 --platform=win32",
     "make:mac": "electron-forge make --arch=x64 --platform=darwin",
     "make:linux": "electron-forge make --arch=x64 --platform=linux",
     "make": "electron-forge make",
-    "make:all": "run-s make:mac make:win make:linux",
+    "make:all": "run-s make:mac make:win make:win32 make:linux",
     "publish": "electron-forge publish",
     "lint": "eslint --cache --color --ext .jsx,.js src",
     "test": "jest",
     "coverage": "jest --coverage --runInBand || true"
   },
   "keywords": [],
-  "author": "cmaltby",
+  "author": "GB Studio",
   "license": "MIT",
   "config": {
     "forge": {
@@ -39,8 +41,12 @@
         "name": "GB Studio",
         "executableName": "gb-studio",
         "packageManager": "yarn",
-        "icon": "src/images/app/icon/app_icon",
+        "icon": "src/assets/app/icon/app_icon",
         "darwinDarkModeSupport": true,
+        "extendInfo": "src/assets/app/Info.plist",
+        "extraResource": [
+          "src/assets/app/icon/gbsproj.icns"
+        ],
         "afterCopy": [
           "./after-copy"
         ],
@@ -56,7 +62,7 @@
       "electronWinstallerConfig": {
         "name": "gb_studio",
         "exe": "gb-studio.exe",
-        "loadingGif": "src/images/app/install.gif"
+        "loadingGif": "src/assets/app/install.gif"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
@@ -65,7 +71,7 @@
         "name": ""
       },
       "electronInstallerDMG": {
-        "background": "src/images/app/dmg/background.tiff",
+        "background": "src/assets/app/dmg/background.tiff",
         "format": "ULFO"
       },
       "windowsStoreConfig": {
@@ -75,6 +81,7 @@
     }
   },
   "dependencies": {
+    "about-window": "^1.12.1",
     "chokidar": "^2.1.2",
     "classnames": "^2.2.5",
     "deepmerge": "^3.1.0",

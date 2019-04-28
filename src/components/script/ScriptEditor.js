@@ -14,6 +14,8 @@ import {
   EVENT_IF_VALUE,
   EVENT_IF_INPUT,
   EVENT_IF_ACTOR_AT_POSITION,
+  EVENT_IF_ACTOR_DIRECTION,
+  EVENT_IF_SAVED_DATA,
   EVENT_END,
   EVENT_LOOP
 } from "../../lib/compiler/eventTypes";
@@ -28,6 +30,7 @@ import {
 import * as actions from "../../actions";
 import { DropdownButton } from "../library/Button";
 import { MenuItem, MenuDivider } from "../library/Menu";
+import l10n from "../../lib/helpers/l10n";
 
 const ItemTypes = {
   CARD: "card"
@@ -74,7 +77,9 @@ const isConditionalEvent = command => {
       EVENT_IF_FALSE,
       EVENT_IF_VALUE,
       EVENT_IF_INPUT,
-      EVENT_IF_ACTOR_AT_POSITION
+      EVENT_IF_ACTOR_AT_POSITION,
+      EVENT_IF_ACTOR_DIRECTION,
+      EVENT_IF_SAVED_DATA
     ].indexOf(command) > -1
   );
 };
@@ -166,7 +171,7 @@ class ActionMini extends Component {
           >
             {connectDragSource(
               <div className="ActionMini__Command">
-                {EventNames[command] || command}
+                {l10n(command) || command}
               </div>
             )}
 
@@ -285,30 +290,37 @@ class ScriptEditor extends Component {
     this.props.onChange(input);
   };
 
-  onAdd = id => command => {
+  onAdd = id => (command, defaults = {}) => {
     const root = this.props.value;
     const eventFields = EventFields[command];
     const defaultArgs = eventFields
-      ? eventFields.reduce((memo, field) => {
-          if (field.defaultValue === "LAST_SCENE") {
-            memo[field.key] = this.props.scenes[
-              this.props.scenes.length - 1
-            ].id;
-          } else if (field.defaultValue === "LAST_VARIABLE") {
-            memo[field.key] =
-              this.props.variables.length > 0
-                ? this.props.variables[this.props.variables.length - 1].id
-                : 0;
-          } else if (field.defaultValue === "LAST_MUSIC") {
-            memo[field.key] = this.props.music[0].id;
-          } else if (field.defaultValue === "LAST_SPRITE") {
-            memo[field.key] = this.props.spriteSheets[0].id;
-          } else if (field.defaultValue !== undefined) {
-            memo[field.key] = field.defaultValue;
-          }
-          return memo;
-        }, {})
-      : {};
+      ? eventFields.reduce(
+          (memo, field) => {
+            if (field.defaultValue === "LAST_SCENE") {
+              memo[field.key] = this.props.scenes[
+                this.props.scenes.length - 1
+              ].id;
+            } else if (field.defaultValue === "LAST_VARIABLE") {
+              memo[field.key] =
+                this.props.variables.length > 0
+                  ? this.props.variables[this.props.variables.length - 1].id
+                  : "0";
+            } else if (field.defaultValue === "LAST_MUSIC") {
+              memo[field.key] = this.props.music[0].id;
+            } else if (field.defaultValue === "LAST_SPRITE") {
+              memo[field.key] = this.props.spriteSheets[0].id;
+            } else if (
+              field.defaultValue !== undefined &&
+              !defaults[field.key]
+            ) {
+              memo[field.key] = field.defaultValue;
+            }
+            return memo;
+          },
+          { ...defaults }
+        )
+      : { ...defaults };
+
     const input = prependEvent(
       root,
       id,
